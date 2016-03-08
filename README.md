@@ -61,3 +61,9 @@ Optionally also accepts a nodeback as `cb`, but seriously, you should be using [
 Any errors that occur during the random number generation process will be of this type. The error object will also have a `code` property, set to the string `"RandomGenerationError"`.
 
 The error message will provide more information, but this kind of error will generally mean that the arguments you've specified are somehow invalid.
+
+## Changelog
+
+* __1.0.2__ (March 8, 2016): __*Security release!*__ Patched handling of large numbers; input values are now checked for `MIN_SAFE_INTEGER` and `MAX_SAFE_INTEGER`, and the correct bitwise operator is used (`>>>` rather than `>>`).
+* __1.0.1__ (March 8, 2016): Unimportant file cleanup.
+* __1.0.0__ (March 8, 2016): Initial release.

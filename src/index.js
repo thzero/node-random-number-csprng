@@ -32,7 +32,15 @@ function calculateParameters(range) {
 		
 		bitsNeeded += 1;
 		mask = mask << 1 | 1; /* 0x00001111 -> 0x00011111 */
-		range = range >> 1;   /* 0x01000000 -> 0x00100000 */
+		
+		/* SECURITY PATCH (March 8, 2016):
+		 *   As it turns out, `>>` is not the right operator to use here, and
+		 *   using it would cause strange outputs, that wouldn't fall into
+		 *   the specified range. This was remedied by switching to `>>>`
+		 *   instead, and adding checks for input parameters being within the
+		 *   range of 'safe integers' in JavaScript.
+		 */
+		range = range >>> 1;  /* 0x01000000 -> 0x00100000 */
 	}
 	
 	return {bitsNeeded, bytesNeeded, mask};
@@ -64,12 +72,29 @@ module.exports = function secureRandomNumber(minimum, maximum, cb) {
 			throw new RandomGenerationError("The maximum value must be higher than the minimum value.")
 		}
 		
-		let range = maximum - minimum;
-		let {bitsNeeded, bytesNeeded, mask} = calculateParameters(range);
+		/* We hardcode the values for the following:
+		 * 
+		 *   https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Number/MIN_SAFE_INTEGER
+		 *   https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+		 * 
+		 * ... as Babel does not appear to transpile them, despite being ES6.
+		 */
 		
-		if (bitsNeeded > 53) {
-			throw new RandomGenerationError("Cannot generate numbers larger than 53 bits.");
+		if (minimum < -9007199254740991 || minimum > 9007199254740991) {
+			throw new RandomGenerationError("The minimum value must be inbetween MIN_SAFE_INTEGER and MAX_SAFE_INTEGER.");
 		}
+		
+		if (maximum < -9007199254740991 || maximum > 9007199254740991) {
+			throw new RandomGenerationError("The maximum value must be inbetween MIN_SAFE_INTEGER and MAX_SAFE_INTEGER.");
+		}
+		
+		let range = maximum - minimum;
+		
+		if (range < -9007199254740991 || range > 9007199254740991) {
+			throw new RandomGenerationError("The range between the minimum and maximum value must be inbetween MIN_SAFE_INTEGER and MAX_SAFE_INTEGER.");
+		}
+		
+		let {bitsNeeded, bytesNeeded, mask} = calculateParameters(range);
 		
 		return Promise.try(() => {
 			return crypto.randomBytesAsync(bytesNeeded);

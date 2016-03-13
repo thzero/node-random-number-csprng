@@ -1,6 +1,5 @@
 var gulp = require('gulp');
 
-/* CoffeeScript compile deps */
 var gutil = require('gulp-util');
 var babel = require('gulp-babel');
 var cache = require('gulp-cached');
